@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2><i class="fas fa-users"></i> Пользователи</h2>
+
+<div class="table-responsive mt-4">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Имя</th>
+                <th>Email</th>
+                <th>Админ</th>
+                <th>Дата регистрации</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td>{{ user[0] }}</td>
+                <td>{{ user[1] }}</td>
+                <td>{{ user[2] }}</td>
+                <td>{% if user[3] %}✅{% else %}❌{% endif %}</td>
+                <td>{{ user[4] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

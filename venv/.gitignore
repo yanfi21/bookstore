@@ -1,0 +1,23 @@
+# Виртуальное окружение
+venv/
+__pycache__/
+*.pyc
+
+# База данных (не загружаем, создастся заново)
+bookstore.db
+
+# Файлы аватаров
+static/avatars/*
+
+# Файлы настроек
+.env
+*.log
+
+# Файлы IDE
+.vscode/
+.idea/
+*.swp
+
+# Системные файлы
+.DS_Store
+Thumbs.db

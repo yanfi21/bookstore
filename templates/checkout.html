@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2 class="mb-4"><i class="fas fa-credit-card"></i> Оформление заказа</h2>
+
+{% if cart_items %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h4>Ваши книги</h4>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Книга</th>
+                                <th>Количество</th>
+                                <th>Цена</th>
+                                <th>Сумма</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in cart_items %}
+                            <tr>
+                                <td><strong>{{ item[2] }}</strong></td>
+                                <td>{{ item[1] }} шт.</td>
+                                <td>{{ item[3] }} ₽</td>
+                                <td>{{ item[3] * item[1] }} ₽</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="3" class="text-end"><strong>Итого:</strong></td>
+                                <td><strong>{{ total }} ₽</strong></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h4><i class="fas fa-credit-card"></i> Оплата</h4>
+                <form method="POST">
+                    <div class="mb-3">
+                        <label class="form-label">Имя на карте</label>
+                        <input type="text" name="card_name" class="form-control" value="{{ session.username }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Номер карты</label>
+                        <input type="text" name="card_number" class="form-control" placeholder="4242 4242 4242 4242" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-6">
+                            <label class="form-label">Срок (MM/YY)</label>
+                            <input type="text" name="card_expiry" class="form-control" placeholder="12/25" required>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">CVV</label>
+                            <input type="text" name="card_cvv" class="form-control" placeholder="123" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 mt-3">
+                        <i class="fas fa-lock"></i> Оплатить {{ total }} ₽
+                    </button>
+                </form>
+                <div class="text-center mt-3">
+                    <small class="text-muted">
+                        <i class="fas fa-shield-alt"></i> Безопасная оплата
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="text-center py-5">
+    <i class="fas fa-shopping-cart fa-4x mb-3" style="color: var(--text-muted);"></i>
+    <h4>Корзина пуста</h4>
+    <p class="text-muted">Добавьте книги в корзину, чтобы оформить заказ</p>
+    <a href="/" class="btn btn-primary mt-3">
+        <i class="fas fa-book"></i> В каталог
+    </a>
+</div>
+{% endif %}
+{% endblock %}

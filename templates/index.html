@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2 class="mb-4"><i class="fas fa-book-open"></i> Каталог книг</h2>
+
+<!-- Фильтры -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <input type="text" id="searchInput" class="form-control" placeholder="Поиск по названию или автору..." value="{{ search_query }}">
+    </div>
+    <div class="col-md-3">
+        <select id="categoryFilter" class="form-select">
+            <option value="">Все категории</option>
+            {% for cat in categories %}
+            <option value="{{ cat }}" {% if current_category == cat %}selected{% endif %}>{{ cat }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-3">
+        <select id="sortSelect" class="form-select">
+            <option value="name_asc">По названию (А-Я)</option>
+            <option value="price_asc">По цене (сначала дешёвые)</option>
+            <option value="price_desc">По цене (сначала дорогие)</option>
+            <option value="quantity_desc">По наличию</option>
+        </select>
+    </div>
+    <div class="col-md-2">
+        <button id="resetFilters" class="btn btn-secondary w-100">Сбросить</button>
+    </div>
+</div>
+
+<!-- Товары -->
+<div class="row">
+    {% if products %}
+        {% for product in products %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">{{ product.name }}</h5>
+                    <h6 class="card-subtitle mb-2 text-muted">{{ product.author }}</h6>
+                    <span class="badge bg-secondary mb-2">{{ product.category }}</span>
+                    <p class="card-text">{{ product.description[:100] }}...</p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="text-primary">{{ product.price }} ₽</h4>
+                        <span class="badge {% if product.quantity > 0 %}bg-success{% else %}bg-danger{% endif %}">
+                            {% if product.quantity > 0 %}В наличии: {{ product.quantity }}{% else %}Нет в наличии{% endif %}
+                        </span>
+                    </div>
+                    {% if product.quantity > 0 %}
+                    <a href="/add-to-cart/{{ product.id }}" class="btn btn-primary w-100 mt-3">
+                        <i class="fas fa-shopping-cart"></i> В корзину
+                    </a>
+                    {% else %}
+                    <button class="btn btn-secondary w-100 mt-3" disabled>Нет в наличии</button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-search fa-4x mb-3"></i>
+            <h4>Книги не найдены</h4>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+    function applyFilters() {
+        const search = document.getElementById('searchInput').value;
+        const category = document.getElementById('categoryFilter').value;
+        const sort = document.getElementById('sortSelect').value;
+        
+        let url = '/?';
+        if (search) url += `search=${encodeURIComponent(search)}&`;
+        if (category) url += `category=${encodeURIComponent(category)}&`;
+        
+        if (sort === 'name_asc') url += 'sort=name&order=asc';
+        else if (sort === 'price_asc') url += 'sort=price&order=asc';
+        else if (sort === 'price_desc') url += 'sort=price&order=desc';
+        else if (sort === 'quantity_desc') url += 'sort=quantity&order=desc';
+        
+        window.location.href = url;
+    }
+    
+    document.getElementById('searchInput').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') applyFilters();
+    });
+    document.getElementById('categoryFilter').addEventListener('change', applyFilters);
+    document.getElementById('sortSelect').addEventListener('change', applyFilters);
+    document.getElementById('resetFilters').addEventListener('click', () => {
+        window.location.href = '/';
+    });
+</script>
+{% endblock %}
