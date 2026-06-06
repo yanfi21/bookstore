@@ -1,26 +1,31 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h2><i class="fas fa-users"></i> Пользователи</h2>
+<h2><i class="fas fa-users"></i> Управление пользователями</h2>
 
 <div class="table-responsive mt-4">
-    <table class="table">
+    <table class="table table-hover">
         <thead>
             <tr>
                 <th>ID</th>
-                <th>Имя</th>
-                <th>Email</th>
-                <th>Админ</th>
-                <th>Дата регистрации</th>
+                <th><i class="fas fa-user"></i> Имя</th>
+                <th><i class="fas fa-envelope"></i> Email</th>
+                <th><i class="fas fa-shield-alt"></i> Админ</th>
+                <th><i class="fas fa-calendar"></i> Дата регистрации</th>
             </tr>
         </thead>
         <tbody>
             {% for user in users %}
             <tr>
                 <td>{{ user[0] }}</td>
-                <td>{{ user[1] }}</td>
+                <td>
+                    <i class="fas fa-user-circle"></i> {{ user[1] }}
+                    {% if user[1] == session.username %}
+                    <span class="badge bg-info ms-2">Вы</span>
+                    {% endif %}
+                </td>
                 <td>{{ user[2] }}</td>
-                <td>{% if user[3] %}✅{% else %}❌{% endif %}</td>
+                <td>{% if user[3] %}✅ Администратор{% else %}👤 Пользователь{% endif %}</td>
                 <td>{{ user[4] }}</td>
             </tr>
             {% endfor %}

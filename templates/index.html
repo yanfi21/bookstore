@@ -6,11 +6,11 @@
 <!-- Фильтры -->
 <div class="row mb-4">
     <div class="col-md-4">
-        <input type="text" id="searchInput" class="form-control" placeholder="Поиск по названию или автору..." value="{{ search_query }}">
+        <input type="text" id="searchInput" class="form-control" placeholder="🔍 Поиск по названию или автору..." value="{{ search_query }}">
     </div>
     <div class="col-md-3">
         <select id="categoryFilter" class="form-select">
-            <option value="">Все категории</option>
+            <option value="">📚 Все категории</option>
             {% for cat in categories %}
             <option value="{{ cat }}" {% if current_category == cat %}selected{% endif %}>{{ cat }}</option>
             {% endfor %}
@@ -18,14 +18,16 @@
     </div>
     <div class="col-md-3">
         <select id="sortSelect" class="form-select">
-            <option value="name_asc">По названию (А-Я)</option>
-            <option value="price_asc">По цене (сначала дешёвые)</option>
-            <option value="price_desc">По цене (сначала дорогие)</option>
-            <option value="quantity_desc">По наличию</option>
+            <option value="name_asc">📖 По названию (А-Я)</option>
+            <option value="price_asc">💰 По цене (сначала дешёвые)</option>
+            <option value="price_desc">💰 По цене (сначала дорогие)</option>
+            <option value="quantity_desc">📦 По наличию</option>
         </select>
     </div>
     <div class="col-md-2">
-        <button id="resetFilters" class="btn btn-secondary w-100">Сбросить</button>
+        <button id="resetFilters" class="btn btn-secondary w-100">
+            <i class="fas fa-undo-alt"></i> Сбросить
+        </button>
     </div>
 </div>
 
@@ -36,22 +38,43 @@
         <div class="col-md-6 col-lg-4 mb-4">
             <div class="card h-100">
                 <div class="card-body">
-                    <h5 class="card-title">{{ product.name }}</h5>
-                    <h6 class="card-subtitle mb-2 text-muted">{{ product.author }}</h6>
-                    <span class="badge bg-secondary mb-2">{{ product.category }}</span>
-                    <p class="card-text">{{ product.description[:100] }}...</p>
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h4 class="text-primary">{{ product.price }} ₽</h4>
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h5 class="card-title">{{ product.name }}</h5>
+                        {% if product.name[0] in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ' %}
+                        <span class="badge bg-info">EN</span>
+                        {% endif %}
+                    </div>
+                    <h6 class="card-subtitle mb-2 text-muted">
+                        <i class="fas fa-user-edit"></i> {{ product.author }}
+                    </h6>
+                    <span class="badge bg-secondary mb-2">
+                        <i class="fas fa-tag"></i> {{ product.category }}
+                    </span>
+                    <p class="card-text small">{{ product.description[:100] }}...</p>
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <h4 class="price mb-0">{{ product.price }} ₽</h4>
                         <span class="badge {% if product.quantity > 0 %}bg-success{% else %}bg-danger{% endif %}">
-                            {% if product.quantity > 0 %}В наличии: {{ product.quantity }}{% else %}Нет в наличии{% endif %}
+                            {% if product.quantity > 0 %}
+                            <i class="fas fa-check-circle"></i> В наличии: {{ product.quantity }}
+                            {% else %}
+                            <i class="fas fa-times-circle"></i> Нет в наличии
+                            {% endif %}
                         </span>
                     </div>
                     {% if product.quantity > 0 %}
-                    <a href="/add-to-cart/{{ product.id }}" class="btn btn-primary w-100 mt-3">
-                        <i class="fas fa-shopping-cart"></i> В корзину
-                    </a>
+                        {% if session.user_id %}
+                        <a href="/add-to-cart/{{ product.id }}" class="btn btn-primary w-100 mt-3">
+                            <i class="fas fa-shopping-cart"></i> В корзину
+                        </a>
+                        {% else %}
+                        <a href="/login" class="btn btn-outline-primary w-100 mt-3">
+                            <i class="fas fa-sign-in-alt"></i> Войдите для покупки
+                        </a>
+                        {% endif %}
                     {% else %}
-                    <button class="btn btn-secondary w-100 mt-3" disabled>Нет в наличии</button>
+                    <button class="btn btn-secondary w-100 mt-3" disabled>
+                        <i class="fas fa-ban"></i> Нет в наличии
+                    </button>
                     {% endif %}
                 </div>
             </div>
@@ -59,8 +82,9 @@
         {% endfor %}
     {% else %}
         <div class="text-center py-5">
-            <i class="fas fa-search fa-4x mb-3"></i>
+            <i class="fas fa-search fa-4x mb-3" style="color: rgba(255,255,255,0.5);"></i>
             <h4>Книги не найдены</h4>
+            <p class="text-white-50">Попробуйте изменить параметры поиска</p>
         </div>
     {% endif %}
 </div>

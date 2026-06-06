@@ -1,0 +1,5 @@
+bookstore.db 
+*.db 
+__pycache__/ 
+*.pyc 
+static/avatars/* 

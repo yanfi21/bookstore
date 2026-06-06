@@ -3,8 +3,10 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 import sqlite3
 import os
+import string
 from io import BytesIO
 import openpyxl
+from datetime import datetime
 
 app = Flask(__name__)
 app.secret_key = 'your-secret-key-change-in-production'
@@ -22,6 +24,26 @@ def utility_processor():
         conn.close()
         return result[0] or 0
     return dict(cart_count=get_cart_count())
+
+def sort_products_with_english_last(products, sort_key='name', reverse=False):
+    """Сортировка: русские названия сначала, английские в конце"""
+    def is_english_first_char(text):
+        if not text:
+            return False
+        first_char = str(text)[0].lower()
+        return first_char in string.ascii_lowercase
+    
+    russian = [p for p in products if not is_english_first_char(p.get(sort_key, ''))]
+    english = [p for p in products if is_english_first_char(p.get(sort_key, ''))]
+    
+    if sort_key == 'price':
+        russian.sort(key=lambda x: x.get(sort_key, 0), reverse=reverse)
+        english.sort(key=lambda x: x.get(sort_key, 0), reverse=reverse)
+    else:
+        russian.sort(key=lambda x: str(x.get(sort_key, '')).lower(), reverse=reverse)
+        english.sort(key=lambda x: str(x.get(sort_key, '')).lower(), reverse=reverse)
+    
+    return russian + english
 
 def init_db():
     conn = sqlite3.connect('bookstore.db')
@@ -88,9 +110,10 @@ def init_db():
             ('Мастер и Маргарита', 'Михаил Булгаков', 450, 10, 'Классика', 'Великий роман о любви и дьяволе', None),
             ('Преступление и наказание', 'Фёдор Достоевский', 390, 5, 'Классика', 'Психологический роман', None),
             ('1984', 'Джордж Оруэлл', 420, 8, 'Антиутопия', 'Роман о тоталитаризме', None),
-            ('Гарри Поттер и философский камень', 'Дж.К. Роулинг', 650, 15, 'Фэнтези', 'Начало приключений', None),
+            ('Harry Potter and the Philosopher\'s Stone', 'J.K. Rowling', 650, 15, 'Fantasy', 'Beginning of adventures', None),
             ('Война и мир', 'Лев Толстой', 890, 3, 'Классика', 'Эпопея о русском обществе', None),
             ('Маленький принц', 'Антуан де Сент-Экзюпери', 350, 20, 'Сказка', 'Мудрая сказка', None),
+            ('The Lord of the Rings', 'J.R.R. Tolkien', 1200, 7, 'Fantasy', 'Epic high fantasy novel', None),
         ]
         for book in test_books:
             c.execute("INSERT INTO products (name, author, price, quantity, category, description, cover_image) VALUES (?,?,?,?,?,?,?)",
@@ -106,7 +129,7 @@ def login_required(f):
     def decorated_function(*args, **kwargs):
         if 'user_id' not in session:
             flash('Пожалуйста, войдите в систему', 'warning')
-            return redirect(url_for('login'))
+            return redirect(url_for('login', next=request.url))
         return f(*args, **kwargs)
     return decorated_function
 
@@ -121,9 +144,6 @@ def admin_required(f):
 
 @app.route('/')
 def index():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    
     category = request.args.get('category', '')
     sort_by = request.args.get('sort', 'name')
     sort_order = request.args.get('order', 'asc')
@@ -143,17 +163,6 @@ def index():
         params.append(f'%{search}%')
         params.append(f'%{search}%')
     
-    if sort_by == 'price':
-        query += f" ORDER BY price {sort_order}"
-    elif sort_by == 'name':
-        query += f" ORDER BY name {sort_order}"
-    elif sort_by == 'quantity':
-        query += f" ORDER BY quantity {sort_order}"
-    elif sort_by == 'newest':
-        query += " ORDER BY created_at DESC"
-    else:
-        query += " ORDER BY name ASC"
-    
     products = c.execute(query, params).fetchall()
     categories = [row[0] for row in c.execute("SELECT DISTINCT category FROM products WHERE category IS NOT NULL AND category != ''").fetchall()]
     
@@ -166,6 +175,9 @@ def index():
             'quantity': p[4], 'category': p[5], 'description': p[6],
             'cover_image': p[7], 'created_at': p[8]
         })
+    
+    reverse = (sort_order == 'desc')
+    products_list = sort_products_with_english_last(products_list, sort_by, reverse)
     
     return render_template('index.html', products=products_list, categories=categories,
                            sort_by=sort_by, sort_order=sort_order,
@@ -384,6 +396,10 @@ def login():
             session['is_admin'] = bool(user[3])
             session['user_avatar'] = user[4]
             flash('Вход выполнен успешно!', 'success')
+            
+            next_url = request.args.get('next')
+            if next_url:
+                return redirect(next_url)
             return redirect(url_for('index'))
         else:
             flash('Неверное имя пользователя или пароль', 'danger')
@@ -551,6 +567,40 @@ def admin_users():
     users = c.execute("SELECT id, username, email, is_admin, created_at FROM users").fetchall()
     conn.close()
     return render_template('admin_users.html', users=users)
+
+@app.route('/admin/json-report')
+@admin_required
+def admin_json_report():
+    conn = sqlite3.connect('bookstore.db')
+    c = conn.cursor()
+    
+    products = c.execute("SELECT id, name, author, price, quantity, category FROM products").fetchall()
+    users = c.execute("SELECT id, username, email, is_admin, created_at FROM users").fetchall()
+    orders = c.execute("SELECT id, user_id, order_date, total_amount, status FROM orders").fetchall()
+    
+    products_list = [{'id': p[0], 'name': p[1], 'author': p[2], 'price': p[3], 'quantity': p[4], 'category': p[5]} for p in products]
+    users_list = [{'id': u[0], 'username': u[1], 'email': u[2], 'is_admin': bool(u[3]), 'registered_at': u[4]} for u in users]
+    orders_list = [{'id': o[0], 'user_id': o[1], 'date': o[2], 'total': o[3], 'status': o[4]} for o in orders]
+    
+    total_revenue = sum(o[3] for o in orders)
+    
+    conn.close()
+    
+    report = {
+        'store_name': 'BookStore',
+        'generated_at': datetime.now().isoformat(),
+        'statistics': {
+            'total_products': len(products_list),
+            'total_users': len(users_list),
+            'total_orders': len(orders_list),
+            'total_revenue': total_revenue
+        },
+        'products': products_list,
+        'users': users_list,
+        'orders': orders_list
+    }
+    
+    return jsonify(report)
 
 @app.route('/get-flash-messages')
 def get_flash_messages():

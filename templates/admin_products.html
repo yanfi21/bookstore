@@ -9,7 +9,7 @@
 </div>
 
 <div class="table-responsive">
-    <table class="table">
+    <table class="table table-hover">
         <thead>
             <tr>
                 <th>ID</th>
@@ -25,14 +25,27 @@
             {% for p in products %}
             <tr>
                 <td>{{ p[0] }}</td>
-                <td>{{ p[1] }}</td>
+                <td>
+                    {{ p[1] }}
+                    {% if p[1][0] in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ' %}
+                    <span class="badge bg-info ms-2">EN</span>
+                    {% endif %}
+                </td>
                 <td>{{ p[2] }}</td>
-                <td>{{ p[3] }} ₽</td>
-                <td>{{ p[4] }}</td>
+                <td><strong>{{ p[3] }} ₽</strong></td>
+                <td>
+                    <span class="badge {% if p[4] > 0 %}bg-success{% else %}bg-danger{% endif %}">
+                        {{ p[4] }}
+                    </span>
+                </td>
                 <td>{{ p[5] }}</td>
                 <td>
-                    <a href="/admin/edit-product/{{ p[0] }}" class="btn btn-sm btn-primary">✏️</a>
-                    <a href="/admin/delete-product/{{ p[0] }}" class="btn btn-sm btn-danger" onclick="return confirm('Удалить?')">🗑️</a>
+                    <a href="/admin/edit-product/{{ p[0] }}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                    <a href="/admin/delete-product/{{ p[0] }}" class="btn btn-sm btn-danger" onclick="return confirm('Удалить эту книгу?')">
+                        <i class="fas fa-trash"></i>
+                    </a>
                 </td>
             </tr>
             {% endfor %}
